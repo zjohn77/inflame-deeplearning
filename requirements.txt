@@ -1,0 +1,14 @@
+torch
+transformers
+datasets
+sentencepiece
+protobuf
+evaluate
+rouge_score
+nltk
+py7zr
+google-cloud-aiplatform
+google-cloud-storage
+numpy
+pandas
+setuptools
