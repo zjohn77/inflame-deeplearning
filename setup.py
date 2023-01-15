@@ -9,7 +9,7 @@ REQUIRED_PACKAGES = [
 ]
 
 setup(
-    name='trainer',
+    name='sentiment_classifier',
     version='0.1',
     install_requires=REQUIRED_PACKAGES,
     packages=find_packages(),
