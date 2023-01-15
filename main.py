@@ -1,11 +1,11 @@
 from sentiment_classifier import *
 import torch
-from sentiment_classifier.config import CLASS_VOCAB
+from sentiment_classifier.config import CLASS_VOCAB, DATA_SAVE_PATH
 
 
 def main():
     # Train model and then save it to model_save_path.
-    xtrain, ytrain, input_features, num_classes = process_data()
+    xtrain, ytrain, input_features, num_classes = process_data(DATA_SAVE_PATH)
     model_save_path = train(xtrain, ytrain, input_features, num_classes)
 
     # Load the locally saved model and use it to generate predictions on new xtrain rows.

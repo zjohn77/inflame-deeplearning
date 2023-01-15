@@ -8,7 +8,6 @@ import torch
 from torch.autograd import Variable
 
 from sentiment_classifier.config import (
-    DATA_SAVE_PATH,
     HIDDEN_UNITS,
     LEARNING_RATE,
     CLASS_VOCAB,
@@ -17,17 +16,17 @@ from sentiment_classifier.config import (
 )
 
 
-def process_data():
-    try:
-        urlretrieve(
-            "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
-            DATA_SAVE_PATH,
-        )
-    except Exception:
-        print(Exception)
+def process_data(data_save_path):
+    # try:
+    #     urlretrieve(
+    #         "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+    #         DATA_SAVE_PATH,
+    #     )
+    # except Exception:
+    #     print(Exception)
 
     datatrain = pd.read_csv(
-        DATA_SAVE_PATH,
+        data_save_path,
         names=["sepal_length", "sepal_width", "petal_length", "petal_width", "species"],
     )
 
