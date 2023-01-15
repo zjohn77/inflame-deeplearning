@@ -1,5 +1,6 @@
 # Project specific
 **/*.csv
+**/*.pt
 
 # My custom
 .DS_Store
