@@ -4,7 +4,7 @@ from setuptools import setup
 REQUIRED_PACKAGES = ["transformers", "datasets", "tqdm", "cloudml-hypertune"]
 
 setup(
-    name="image_recognition",
+    name="hf_trainer",
     version="0.1",
     install_requires=REQUIRED_PACKAGES,
     packages=find_packages(),

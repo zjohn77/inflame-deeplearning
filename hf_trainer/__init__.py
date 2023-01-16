@@ -1,5 +1,4 @@
 from .hyperparams import *
-from .model_architecture import *
 from .preprocess import *
 
 import torch
