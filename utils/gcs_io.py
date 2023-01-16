@@ -1,6 +1,6 @@
 import os
 from gcsfs import GCSFileSystem
-from sentiment_classifier.config import GCP_PROJ, BUCKET
+from config import GCP_PROJ, BUCKET
 
 
 def write_to_gcs(data: str, filename: str):

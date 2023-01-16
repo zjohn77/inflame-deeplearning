@@ -1,4 +1,5 @@
 torch
+torchvision
 transformers
 datasets
 sentencepiece
@@ -13,3 +14,4 @@ numpy
 pandas
 setuptools
 gcsfs
+matplotlib
