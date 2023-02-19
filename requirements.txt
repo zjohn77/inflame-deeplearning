@@ -1,9 +1,9 @@
 azure-ai-ml
-jupyter
+azure-identity
 datasets
+jupyter
+mlflow
 numpy
 torch
-transformers
-azure-identity
 torchvision
-mlflow
+transformers

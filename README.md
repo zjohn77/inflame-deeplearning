@@ -9,8 +9,8 @@ Go inside the sentiment_imdb directory and then execute the following:
 `pip install -r requirements.txt`
 
 ### Run
-Run the trainer module from its entry point as follows:
+Run the trainer script from its entry point as follows:
 
-`python -m trainer.task`
+`python pytorch_train.py`
 
 The above should write to the configured cloud bucket the sentiment classification of a sample review.

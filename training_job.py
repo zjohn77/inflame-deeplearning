@@ -1,7 +1,11 @@
-from azure.ai.ml import MLClient, command, Input
+import os
+
+from azure.ai.ml import MLClient, command
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential
-import os
+
+GPU_COMPUTE_TAGET = "gpu-cluster"
+CURATED_ENV_NAME = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
 
 ml_client = MLClient(
     credential=DefaultAzureCredential(),
@@ -10,19 +14,14 @@ ml_client = MLClient(
     workspace_name=os.getenv("AML_WORKSPACE_NAME"),
 )
 
-GPU_COMPUTE_TAGET = "gpu-cluster"
-CURATED_ENV_NAME = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
-
+# Step 1: create compute instance
 try:
-    # let's see if the compute target already exists
     gpu_cluster = ml_client.compute.get(GPU_COMPUTE_TAGET)
     print(
         f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is."
     )
 except Exception:
     print("Creating a new gpu compute target...")
-
-    # Let's create the Azure ML compute object with the intended parameters
     gpu_cluster = AmlCompute(
         # Name assigned to the compute cluster
         name="gpu-cluster",
@@ -39,24 +38,22 @@ except Exception:
         # Dedicated or LowPriority. The latter is cheaper but there is a chance of job termination
         tier="Dedicated",
     )
-
-    # Now, we pass the object to MLClient's create_or_update method
     gpu_cluster = ml_client.begin_create_or_update(gpu_cluster).result()
 
 print(
     f"AMLCompute with name {gpu_cluster.name} is created, the compute size is {gpu_cluster.size}"
 )
 
+# Step 2: submit job to the created compute instance
 job = command(
     inputs=dict(
         num_epochs=30, learning_rate=0.001, momentum=0.9, output_dir="./outputs"
     ),
     compute=GPU_COMPUTE_TAGET,
     environment=CURATED_ENV_NAME,
-    code="./trainer/",  # location of source code
+    code="./src/",  # location of source code
     command="python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir ${{inputs.output_dir}}",
     experiment_name="pytorch-birds",
     display_name="pytorch-birds-image",
 )
-
 ml_client.jobs.create_or_update(job)
