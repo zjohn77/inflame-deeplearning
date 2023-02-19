@@ -2,16 +2,25 @@ import os
 
 from azure.ai.ml import MLClient, command
 from azure.ai.ml.entities import AmlCompute
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
 GPU_COMPUTE_TAGET = "gpu-cluster"
 CURATED_ENV_NAME = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
 
+try:
+    credential = DefaultAzureCredential()
+    # Check if given credential can get token successfully.
+    credential.get_token("https://management.azure.com/.default")
+except Exception as ex:
+    # Fall back to InteractiveBrowserCredential in case DefaultAzureCredential not work
+    # This will open a browser page for
+    credential = InteractiveBrowserCredential()
+
 ml_client = MLClient(
-    credential=DefaultAzureCredential(),
     subscription_id=os.getenv("SUBSCRIPTION_ID"),
     resource_group_name=os.getenv("RESOURCE_GROUP"),
     workspace_name=os.getenv("AML_WORKSPACE_NAME"),
+    credential=credential,
 )
 
 # Step 1: create compute instance
