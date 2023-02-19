@@ -1,0 +1,9 @@
+azure-ai-ml
+jupyter
+datasets
+numpy
+torch
+transformers
+azure-identity
+torchvision
+mlflow
