@@ -1,6 +1,6 @@
 import os
 
-from azure.ai.ml import MLClient, command
+from azure.ai.ml import command, MLClient
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
@@ -26,9 +26,7 @@ ml_client = MLClient(
 # Step 1: create compute instance
 try:
     gpu_cluster = ml_client.compute.get(GPU_COMPUTE_TAGET)
-    print(
-        f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is."
-    )
+    print(f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is.")
 except Exception:
     print("Creating a new gpu compute target...")
     gpu_cluster = AmlCompute(
@@ -50,18 +48,20 @@ except Exception:
     gpu_cluster = ml_client.begin_create_or_update(gpu_cluster).result()
 
 print(
-    f"AMLCompute with name {gpu_cluster.name} is created, the compute size is {gpu_cluster.size}"
+    f"AMLCompute with name {gpu_cluster.name} is created, the compute size is"
+    f" {gpu_cluster.size}"
 )
 
 # Step 2: submit job to the created compute instance
 job = command(
-    inputs=dict(
-        num_epochs=1, learning_rate=0.001, momentum=0.9, output_dir="./output"
-    ),
+    inputs=dict(num_epochs=1, learning_rate=0.001, momentum=0.9, output_dir="./output"),
     compute=GPU_COMPUTE_TAGET,
     environment=CURATED_ENV_NAME,
     code="./src/",  # location of source code
-    command="python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir ${{inputs.output_dir}}",
+    command=(
+        "python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir"
+        " ${{inputs.output_dir}}"
+    ),
     experiment_name="bird-experiment",
     display_name="bird-job",
 )

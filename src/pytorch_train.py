@@ -2,6 +2,7 @@ import argparse
 import copy
 import os
 import time
+from dataclasses import dataclass
 from typing import Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
@@ -10,9 +11,18 @@ import mlflow
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler, SGD
+from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
+
+
+@dataclass
+class ModelDirStructure:
+    root_dir: Union[os.PathLike, str] = os.getenv("AZUREML_MODEL_DIR")
+    training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
+    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
+    training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
+    inference_output: Union[os.PathLike, str] = os.path.join(root_dir, "inference_output")
 
 
 def download_data(
@@ -24,10 +34,10 @@ def download_data(
         filename=tmp_data_download_path,
     )
 
-    with ZipFile(tmp_data_download_path) as zip:
-        zip.extractall()
+    with ZipFile(tmp_data_download_path) as z:
+        z.extractall()
         print("finished extracting")
-        downloaded_data_dir = zip.namelist()[0]
+        downloaded_data_dir = z.namelist()[0]
 
     # clean up zip file
     os.remove(tmp_data_download_path)
@@ -35,7 +45,7 @@ def download_data(
     return downloaded_data_dir
 
 
-def _load_data(data_dir):
+def _load_data(data_dir: Union[os.PathLike, str]):
     """Make pytorch data loaders."""
     # Data augmentation and normalization for training
     # Just normalization for validation
@@ -144,7 +154,8 @@ def fine_tune_model(
     learning_rate: float,
     momentum: float,
 ):
-    """Load a pretrained model and reset the final fully connected layer. Return the best model."""
+    """Load a pretrained model and reset the final fully connected layer. Return the best model.
+    """
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)  # only 2 classes to predict: turkey or chicken
@@ -167,22 +178,22 @@ def fine_tune_model(
     return model
 
 
-def main():
+def cli_main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output_dir",
+        "--output-dir",
         type=str,
-        default=os.getenv("AZUREML_MODEL_DIR"),
+        default=ModelDirStructure().training_output,
         help="output directory",
     )
     parser.add_argument(
-        "--num_epochs",
+        "--num-epochs",
         type=int,
         default=1,
         help="number of epochs to train",
     )
     parser.add_argument(
-        "--learning_rate",
+        "--learning-rate",
         type=float,
         default=0.001,
         help="learning rate",
@@ -198,12 +209,11 @@ def main():
     # Start MLflow
     mlflow.start_run()
 
-    global DEVICE
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
     # Fit model; serializing it as model.pt to the specified output directory
     model = fine_tune_model(
-        input_data_dir=download_data("../fowl_data.zip"),
+        input_data_dir=download_data(
+            os.path.join(ModelDirStructure().training_input, "fowl_data.zip")
+        ),
         num_epochs=args.num_epochs,
         learning_rate=args.learning_rate,
         momentum=args.momentum,
@@ -215,4 +225,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    global DEVICE
+    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    cli_main()

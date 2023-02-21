@@ -1,3 +1,4 @@
+**/*.jpg
 fowl_data/
 mlruns/
 output/
