@@ -14,9 +14,11 @@ from torchvision import transforms
 class ModelDirStructure:
     root_dir: Union[os.PathLike, str] = os.getenv("AZUREML_MODEL_DIR")
     training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
-    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
+    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
     training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
-    inference_output: Union[os.PathLike, str] = os.path.join(root_dir, "inference_output")
+    inference_output: Union[os.PathLike, str] = os.path.join(
+        root_dir, "inference_output"
+    )
 
 
 def init():
@@ -58,7 +60,9 @@ def preprocess(image_file):
 
 def run():
     """get prediction"""
-    sample_image_file = os.path.join(ModelDirStructure().inference_input, "test_img.jpg")
+    sample_image_file = os.path.join(
+        ModelDirStructure().inference_input, "test_img.jpg"
+    )
     plt.imshow(Image.open(sample_image_file))
     input_data = torch.tensor(preprocess(sample_image_file))
 

@@ -4,8 +4,6 @@ import os
 import time
 from dataclasses import dataclass
 from typing import Union
-from urllib.request import urlretrieve
-from zipfile import ZipFile
 
 import mlflow
 import numpy as np
@@ -20,31 +18,11 @@ from torchvision import datasets, models, transforms
 class ModelDirStructure:
     root_dir: Union[os.PathLike, str] = os.getenv("AZUREML_MODEL_DIR")
     training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
-    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
+    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
     training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
     inference_output: Union[os.PathLike, str] = os.path.join(
         root_dir, "inference_output"
     )
-
-
-def download_data(
-    tmp_data_download_path: Union[os.PathLike, str]
-) -> Union[os.PathLike, str]:
-    """Download and extract the training data."""
-    urlretrieve(
-        "https://azuremlexamples.blob.core.windows.net/datasets/fowl_data.zip",
-        filename=tmp_data_download_path,
-    )
-
-    with ZipFile(tmp_data_download_path) as z:
-        z.extractall()
-        print("finished extracting")
-        downloaded_data_dir = z.namelist()[0]
-
-    # clean up zip file
-    os.remove(tmp_data_download_path)
-
-    return downloaded_data_dir
 
 
 def _load_data(data_dir: Union[os.PathLike, str]):
@@ -128,7 +106,7 @@ def train_model(
                         optimizer.step()
 
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += np.sum(preds == labels.data)
+                running_corrects += torch.sum(preds == labels.data)
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects / dataset_sizes[phase]
@@ -151,7 +129,7 @@ def train_model(
 
 
 def fine_tune_model(
-    input_data_dir: os.PathLike,
+    input_data_dir: Union[os.PathLike, str],
     num_epochs: int,
     learning_rate: float,
     momentum: float,
@@ -212,9 +190,7 @@ def cli_main():
 
     # Fit model; serializing it as model.pt to the specified output directory
     model = fine_tune_model(
-        input_data_dir=download_data(
-            os.path.join(ModelDirStructure().training_input, "fowl_data.zip")
-        ),
+        input_data_dir=os.path.join(ModelDirStructure().training_input, "fowl_data"),
         num_epochs=args.num_epochs,
         learning_rate=args.learning_rate,
         momentum=args.momentum,
