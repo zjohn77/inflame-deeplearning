@@ -26,7 +26,9 @@ ml_client = MLClient(
 # Step 1: create compute instance
 try:
     gpu_cluster = ml_client.compute.get(GPU_COMPUTE_TAGET)
-    print(f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is.")
+    print(
+        f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is."
+    )
 except Exception:
     print("Creating a new gpu compute target...")
     gpu_cluster = AmlCompute(

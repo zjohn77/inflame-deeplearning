@@ -22,7 +22,9 @@ class ModelDirStructure:
     training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
     inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
     training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
-    inference_output: Union[os.PathLike, str] = os.path.join(root_dir, "inference_output")
+    inference_output: Union[os.PathLike, str] = os.path.join(
+        root_dir, "inference_output"
+    )
 
 
 def download_data(
@@ -154,8 +156,7 @@ def fine_tune_model(
     learning_rate: float,
     momentum: float,
 ):
-    """Load a pretrained model and reset the final fully connected layer. Return the best model.
-    """
+    """Load a pretrained model and reset the final fully connected layer. Return the best model."""
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)  # only 2 classes to predict: turkey or chicken
