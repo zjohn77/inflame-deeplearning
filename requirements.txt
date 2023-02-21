@@ -2,8 +2,10 @@ azure-ai-ml
 azure-identity
 datasets
 jupyter
+matplotlib
 mlflow
 numpy
+pillow
 torch
 torchvision
 transformers

@@ -1,56 +1,61 @@
-# Copyright (c) 2017, PyTorch contributors
-# Modifications copyright (C) Microsoft Corporation
-# Licensed under the BSD license
-# Adapted from https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+from __future__ import division, print_function
 
-from __future__ import print_function, division
+import argparse
+import copy
+import os
+import time
+
+import matplotlib.pyplot as plt
+import mlflow
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from PIL import Image
 from torch.optim import lr_scheduler
 from torchvision import datasets, models, transforms
-import numpy as np
-import time
-import os
-import copy
-import argparse
-import mlflow
+
+
+def download_data():
+    """Download and extract the training data."""
+    import urllib
+    from zipfile import ZipFile
+
+    # download data
+    data_file = "./fowl_data.zip"
+    download_url = ("https://azuremlexamples.blob.core.windows.net/datasets/fowl_data.zip")
+    urllib.request.urlretrieve(download_url, filename=data_file)
+
+    # extract files
+    with ZipFile(data_file, "r") as zip:
+        print("extracting files...")
+        zip.extractall()
+        print("finished extracting")
+        data_dir = zip.namelist()[0]
+
+    # delete zip file
+    os.remove(data_file)
+
+    return data_dir
 
 
 def load_data(data_dir):
-    """Load the train/val data."""
-
     # Data augmentation and normalization for training
     # Just normalization for validation
     data_transforms = {
-        "train": transforms.Compose(
-            [
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        ),
-        "val": transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
+        "train":  transforms.Compose(
+            [transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(),
+             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), ]
+        ), "val": transforms.Compose(
+            [transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(),
+             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), ]
         ),
     }
 
-    image_datasets = {
-        x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
-        for x in ["train", "val"]
-    }
-    dataloaders = {
-        x: torch.utils.data.DataLoader(
-            image_datasets[x], batch_size=4, shuffle=True, num_workers=4
-        )
-        for x in ["train", "val"]
-    }
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ["train", "val"]}
+    dataloaders = {x: torch.utils.data.DataLoader(
+        image_datasets[x], batch_size=4, shuffle=True, num_workers=4
+    ) for x in ["train", "val"]}
     dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "val"]}
     class_names = image_datasets["train"].classes
 
@@ -58,8 +63,6 @@ def load_data(data_dir):
 
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir):
-    """Train the model."""
-
     # load training/validation data
     dataloaders, dataset_sizes, class_names = load_data(data_dir)
 
@@ -107,12 +110,12 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir):
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                running_corrects += np.sum(preds == labels.data)
 
             epoch_loss = running_loss / dataset_sizes[phase]
-            epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            epoch_acc = running_corrects / dataset_sizes[phase]
 
-            print("{} Loss: {:.4f} Acc: {:.4f}".format(phase, epoch_loss, epoch_acc))
+            print("{} Loss: {:.4f} Acc: {:.4f}\n".format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
             if phase == "val" and epoch_acc > best_acc:
@@ -121,8 +124,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir):
 
             # log the best val accuracy to AML run
             mlflow.log_metric("best_val_acc", np.float(best_acc))
-
-        print()
 
     time_elapsed = time.time() - since
     print(
@@ -134,16 +135,12 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs, data_dir):
 
     # load best model weights
     model.load_state_dict(best_model_wts)
+
     return model
 
 
 def fine_tune_model(num_epochs, data_dir, learning_rate, momentum):
     """Load a pretrained model and reset the final fully connected layer."""
-
-    # log the hyperparameter metrics to the AML run
-    mlflow.log_metric("lr", np.float(learning_rate))
-    mlflow.log_metric("momentum", np.float(momentum))
-
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)  # only 2 classes to predict
@@ -166,28 +163,20 @@ def fine_tune_model(num_epochs, data_dir, learning_rate, momentum):
     return model
 
 
-def download_data():
-    """Download and extract the training data."""
-    import urllib
-    from zipfile import ZipFile
+def preprocess(image_file):
+    """Preprocess the input image."""
+    image = Image.open(image_file)
 
-    # download data
-    data_file = "./fowl_data.zip"
-    download_url = (
-        "https://azuremlexamples.blob.core.windows.net/datasets/fowl_data.zip"
+    data_transforms = transforms.Compose(
+        [transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(),
+         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), ]
     )
-    urllib.request.urlretrieve(download_url, filename=data_file)
 
-    # extract files
-    with ZipFile(data_file, "r") as zip:
-        print("extracting files...")
-        zip.extractall()
-        print("finished extracting")
-        data_dir = zip.namelist()[0]
+    image = data_transforms(image).float()
+    image = torch.tensor(image)
+    image = image.unsqueeze(0)
 
-    # delete zip file
-    os.remove(data_file)
-    return data_dir
+    return image.numpy()
 
 
 def main():
@@ -196,9 +185,9 @@ def main():
     # get command-line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--num_epochs", type=int, default=25, help="number of epochs to train"
+        "--num_epochs", type=int, default=1, help="number of epochs to train"
     )
-    parser.add_argument("--output_dir", type=str, help="output directory")
+    parser.add_argument("--output_dir", type=str, default="./output", help="output directory")
     parser.add_argument(
         "--learning_rate", type=float, default=0.001, help="learning rate"
     )
@@ -217,6 +206,10 @@ def main():
     torch.save(model, os.path.join(args.output_dir, "model.pt"))
 
     mlflow.end_run()
+
+    sample_image_file = "test_img.jpg"
+    plt.imshow(Image.open(sample_image_file))
+    image_data = preprocess(sample_image_file)
 
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ except Exception:
         # Nodes in cluster
         max_instances=4,
         # How many seconds will the node running after the job termination
-        idle_time_before_scale_down=180,
+        idle_time_before_scale_down=60,
         # Dedicated or LowPriority. The latter is cheaper but there is a chance of job termination
         tier="Dedicated",
     )
@@ -56,13 +56,13 @@ print(
 # Step 2: submit job to the created compute instance
 job = command(
     inputs=dict(
-        num_epochs=30, learning_rate=0.001, momentum=0.9, output_dir="./outputs"
+        num_epochs=1, learning_rate=0.001, momentum=0.9, output_dir="./output"
     ),
     compute=GPU_COMPUTE_TAGET,
     environment=CURATED_ENV_NAME,
     code="./src/",  # location of source code
     command="python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir ${{inputs.output_dir}}",
-    experiment_name="pytorch-birds",
-    display_name="pytorch-birds-image",
+    experiment_name="bird-experiment",
+    display_name="bird-job",
 )
 ml_client.jobs.create_or_update(job)
