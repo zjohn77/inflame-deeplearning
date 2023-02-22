@@ -2,6 +2,7 @@ import logging
 import os
 from dataclasses import dataclass
 from typing import Union
+import json
 
 import matplotlib.pyplot as plt
 import torch
@@ -83,4 +84,12 @@ def run():
 
 if __name__ == "__main__":
     init()
-    run()
+    prediction = run()
+    output_path = os.path.join(ModelDirStructure().inference_output, "prediction.json")
+    try:
+        with open(output_path, "w") as f:
+            json.dump(prediction, f)
+    except FileNotFoundError:
+        os.mkdir(ModelDirStructure().inference_output)
+        with open(output_path, "w") as f:
+            json.dump(prediction, f)
