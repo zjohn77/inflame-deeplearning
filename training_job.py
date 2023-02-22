@@ -9,11 +9,11 @@ CURATED_ENV_NAME = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
 
 try:
     credential = DefaultAzureCredential()
-    # Check if given credential can get token successfully.
-    credential.get_token("https://management.azure.com/.default")
+    credential.get_token(
+        "https://management.azure.com/.default"
+    )  # Check if given credential can get token successfully.
+
 except Exception as ex:
-    # Fall back to InteractiveBrowserCredential in case DefaultAzureCredential not work
-    # This will open a browser page for
     credential = InteractiveBrowserCredential()
 
 ml_client = MLClient(
@@ -26,9 +26,7 @@ ml_client = MLClient(
 # Step 1: create compute instance
 try:
     gpu_cluster = ml_client.compute.get(GPU_COMPUTE_TAGET)
-    print(
-        f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is."
-    )
+    print(f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is.")
 except Exception:
     print("Creating a new gpu compute target...")
     gpu_cluster = AmlCompute(
