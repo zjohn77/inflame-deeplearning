@@ -6,7 +6,7 @@ matplotlib
 mlflow
 numpy
 pillow
+tomli
 torch
 torchvision
 transformers
-tomli

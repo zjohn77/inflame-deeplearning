@@ -1,19 +1,10 @@
 import os
-from dataclasses import dataclass
 from typing import Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 
-
-@dataclass
-class ModelDirStructure:
-    root_dir: Union[os.PathLike, str] = "/Users/jj/.aml-models"
-    training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
-    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
-    training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
-    inference_output: Union[os.PathLike, str] = os.path.join(
-        root_dir, "inference_output"
-    )
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 
 
 def download_data(
@@ -34,3 +25,40 @@ def download_data(
     os.remove(tmp_data_download_path)
 
     return downloaded_data_dir
+
+
+def load_data(data_dir: Union[os.PathLike, str]):
+    """Make pytorch data loaders."""
+    # Data augmentation and normalization for training
+    # Just normalization for validation
+    data_transforms = {
+        "train": transforms.Compose(
+            [
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        ),
+        "val": transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        ),
+    }
+
+    image_datasets = {
+        x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
+        for x in ["train", "val"]
+    }
+    dataloaders = {
+        x: DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4)
+        for x in ["train", "val"]
+    }
+    dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "val"]}
+    class_names = image_datasets["train"].classes
+
+    return dataloaders, dataset_sizes, class_names

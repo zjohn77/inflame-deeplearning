@@ -61,7 +61,7 @@ def create_and_submit_job(ml_client, config):
         environment=config["compute"]["environment"],
         compute=config["compute"]["compute_target"] or "local",
         display_name="new-bird-job",
-        description="The description of the experiment",
+        description="Chicken or turkey classifier",
     )
 
     return ml_client.jobs.create_or_update(job)

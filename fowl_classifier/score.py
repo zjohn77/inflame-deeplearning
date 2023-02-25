@@ -6,10 +6,8 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 
-from fowl_classifier.utils import ModelDirStructure
 
-
-def load_model():
+def load_model(config):
     """
     This function is called when the container is initialized/started, typically after create/update of the deployment.
     You can write the logic here to perform init operations like caching the model in memory.
@@ -18,7 +16,7 @@ def load_model():
     """
     # deserialize the model file back into a model
     model = torch.load(
-        os.path.join(ModelDirStructure().training_output, "model.pt"),
+        os.path.join(config["io"]["training_output"], "model.pt"),
         map_location=lambda storage, loc: storage,
     )
 
@@ -45,11 +43,9 @@ def preprocess(image_file):
     return image.numpy()
 
 
-def run_inference(model):
+def run_inference(model, config):
     """get prediction"""
-    sample_image_file = os.path.join(
-        ModelDirStructure().inference_input, "test_img.jpg"
-    )
+    sample_image_file = config["io"]["inference_input"]
     input_data = torch.tensor(preprocess(sample_image_file))
 
     with torch.no_grad():
@@ -63,15 +59,3 @@ def run_inference(model):
         "label": classes[index],
         "probability": str(pred_probs[index]),
     }
-
-
-if __name__ == "__main__":
-    prediction = run_inference(load_model())
-    output_path = os.path.join(ModelDirStructure().inference_output, "prediction.json")
-    try:
-        with open(output_path, "w") as f:
-            json.dump(prediction, f)
-    except FileNotFoundError:
-        os.mkdir(ModelDirStructure().inference_output)
-        with open(output_path, "w") as f:
-            json.dump(prediction, f)

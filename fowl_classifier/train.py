@@ -9,149 +9,134 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler, SGD
-from torch.utils.data import DataLoader
-from torchvision import datasets, models, transforms
+from torchvision import models
 
-from fowl_classifier.utils import ModelDirStructure
-
-
-def _load_data(data_dir: Union[os.PathLike, str]):
-    """Make pytorch data loaders."""
-    # Data augmentation and normalization for training
-    # Just normalization for validation
-    data_transforms = {
-        "train": transforms.Compose(
-            [
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        ),
-        "val": transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        ),
-    }
-
-    image_datasets = {
-        x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
-        for x in ["train", "val"]
-    }
-    dataloaders = {
-        x: DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4)
-        for x in ["train", "val"]
-    }
-    dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "val"]}
-    class_names = image_datasets["train"].classes
-
-    return dataloaders, dataset_sizes, class_names
+from fowl_classifier.utils import load_data
 
 
-def train_model(
-    model,
-    criterion,
-    optimizer,
-    scheduler,
-    num_epochs,
-    input_data_dir,
-):
-    """Iterate by epoch, phase, and then each data batch."""
-    since = time.time()
+class ImageRecogModel:
+    def __init__(
+        self,
+        model,
+        criterion,
+        optimizer,
+        scheduler,
+        num_epochs: int,
+        learning_rate: float,
+        momentum: float,
+        input_data_dir: Union[os.PathLike, str],
+    ):
+        self.model = model
+        self.criterion = criterion
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+        self.momentum = momentum
+        self.input_data_dir = input_data_dir
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Call the previously defined data loader function
-    dataloaders, dataset_sizes, class_names = _load_data(input_data_dir)
+    def _train_model(self):
+        """Iterate by epoch, phase, and then each data batch."""
+        since = time.time()
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
-    for epoch in range(num_epochs):
-        print(f"Epoch {epoch}/{num_epochs - 1}\n", "-" * 10)
-        for phase in ["train", "val"]:  # Each epoch has a training and validation phase
-            if phase == "train":
-                scheduler.step()
-                model.train()  # Set model to training mode
-            else:
-                model.eval()  # Set model to evaluate mode
+        dataloaders, dataset_sizes, class_names = load_data(self.input_data_dir)
 
-            running_loss = 0.0
-            running_corrects = 0
-            for inputs, labels in dataloaders[phase]:
-                inputs = inputs.to(DEVICE)
-                labels = labels.to(DEVICE)
+        best_model_wts = copy.deepcopy(self.model.state_dict())
+        best_acc = 0.0
+        for epoch in range(self.num_epochs):
+            print(f"Epoch {epoch}/{self.num_epochs - 1}\n", "-" * 10)
+            for phase in [
+                "train",
+                "val",
+            ]:  # Each epoch has a training and validation phase
+                if phase == "train":
+                    self.scheduler.step()
+                    self.model.train()  # Set model to training mode
+                else:
+                    self.model.eval()  # Set model to evaluate mode
 
-                optimizer.zero_grad()
+                running_loss = 0.0
+                running_corrects = 0
+                for inputs, labels in dataloaders[phase]:
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
-                with torch.set_grad_enabled(phase == "train"):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
+                    self.optimizer.zero_grad()
 
-                    # backward + optimize only if in training phase
-                    if phase == "train":
-                        loss.backward()
-                        optimizer.step()
+                    with torch.set_grad_enabled(phase == "train"):
+                        outputs = self.model(inputs)
+                        _, preds = torch.max(outputs, 1)
+                        loss = self.criterion(outputs, labels)
 
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                        # backward + optimize only if in training phase
+                        if phase == "train":
+                            loss.backward()
+                            self.optimizer.step()
 
-            epoch_loss = running_loss / dataset_sizes[phase]
-            epoch_acc = running_corrects / dataset_sizes[phase]
+                    running_loss += loss.item() * inputs.size(0)
+                    running_corrects += torch.sum(preds == labels.data)
 
-            print("{} Loss: {:.3f} Acc: {:.3f}\n".format(phase, epoch_loss, epoch_acc))
+                epoch_loss = running_loss / dataset_sizes[phase]
+                epoch_acc = running_corrects / dataset_sizes[phase]
 
-            # deep copy the model if a better one has been found
-            if phase == "val" and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
+                print(
+                    "{} Loss: {:.3f} Acc: {:.3f}\n".format(phase, epoch_loss, epoch_acc)
+                )
 
-    time_elapsed = time.time() - since
-    mlflow.log_metric("time_it_took_to_train", time_elapsed)
-    mlflow.log_metric("best_val_acc", np.float(best_acc))
+                # deep copy the model if a better one has been found
+                if phase == "val" and epoch_acc > best_acc:
+                    best_acc = epoch_acc
+                    best_model_wts = copy.deepcopy(self.model.state_dict())
 
-    model.load_state_dict(best_model_wts)  # load best model weights
+        time_elapsed = time.time() - since
+        mlflow.log_metric("time_it_took_to_train", time_elapsed)
+        mlflow.log_metric("best_val_acc", np.float(best_acc))
 
-    return model
+        self.model.load_state_dict(best_model_wts)  # load best model weights
+
+        return self.model
+
+    def fine_tune_model(self):
+        """Load a pretrained model and reset the final fully connected layer. Return the best model."""
+        model_ft = models.resnet18(pretrained=True)
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(
+            num_ftrs, 2
+        )  # only 2 classes to predict: turkey or chicken
+        model_ft = model_ft.to(self.device)
+
+        criterion =
+        optimizer_ft = SGD(
+            model_ft.parameters(), lr=self.learning_rate, momentum=self.momentum
+        )
+
+        self.model = model_ft
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = optimizer_ft
+        self.scheduler = lr_scheduler.StepLR(
+                optimizer_ft, step_size=7, gamma=0.1,
+            )
+        self.num_epochs =
+
+        model = self._train_model(
+            model=model_ft,
+            criterion=criterion,
+            optimizer=optimizer_ft,
+            scheduler=,  # Decay LR by a factor of 0.1 every 7 epochs
+            num_epochs=self.num_epochs,
+            input_data_dir=self.input_data_dir,
+        )
+
+        return model
 
 
-def fine_tune_model(
-    input_data_dir: Union[os.PathLike, str],
-    num_epochs: int,
-    learning_rate: float,
-    momentum: float,
-):
-    """Load a pretrained model and reset the final fully connected layer. Return the best model."""
-    model_ft = models.resnet18(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 2)  # only 2 classes to predict: turkey or chicken
-    model_ft = model_ft.to(DEVICE)
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer_ft = SGD(model_ft.parameters(), lr=learning_rate, momentum=momentum)
-
-    model = train_model(
-        model=model_ft,
-        criterion=criterion,
-        optimizer=optimizer_ft,
-        scheduler=lr_scheduler.StepLR(
-            optimizer_ft, step_size=7, gamma=0.1
-        ),  # Decay LR by a factor of 0.1 every 7 epochs
-        num_epochs=num_epochs,
-        input_data_dir=input_data_dir,
-    )
-
-    return model
-
-
-def cli_main():
+def cli_main(config):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--output-dir",
         type=str,
-        default=ModelDirStructure().training_output,
+        default=config["io"]["training_output"],
         help="output directory",
     )
     parser.add_argument(
@@ -179,9 +164,7 @@ def cli_main():
 
     # Fit model; serializing it as model.pt to the specified output directory
     model = fine_tune_model(
-        input_data_dir=os.path.join(
-            ModelDirStructure().training_input, INPUT_DATA_FOLDER_NAME
-        ),
+        input_data_dir=config["io"]["training_input"],
         num_epochs=args.num_epochs,
         learning_rate=args.learning_rate,
         momentum=args.momentum,
@@ -190,9 +173,3 @@ def cli_main():
     torch.save(model, os.path.join(args.output_dir, "model.pt"))
 
     mlflow.end_run()
-
-
-if __name__ == "__main__":
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    INPUT_DATA_FOLDER_NAME = "fowl_data"
-    cli_main()
