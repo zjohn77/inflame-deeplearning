@@ -1,89 +1,84 @@
-import os
+import logging
 
+import tomli
 from azure.ai.ml import command, MLClient
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
-GPU_COMPUTE_TAGET = "gpu-cluster"
-CURATED_ENV_NAME = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
 
-
-def create_aml_client():
+def create_aml_client(config):
     try:
         credential = DefaultAzureCredential()
         credential.get_token("https://management.azure.com/.default")
 
     except Exception as exc:
-        print(exc)
+        logger.info(exc)
         credential = InteractiveBrowserCredential()
 
     # noinspection PyTypeChecker
     ml_client = MLClient(
-        subscription_id=os.getenv("SUBSCRIPTION_ID"),
-        resource_group_name=os.getenv("RESOURCE_GROUP"),
-        workspace_name=os.getenv("AML_WORKSPACE_NAME"),
+        subscription_id=config["workspace"]["subscription_id"],
+        resource_group_name=config["workspace"]["resource_group_name"],
+        workspace_name=config["workspace"]["workspace_name"],
         credential=credential,
     )
 
     return ml_client
 
 
-def create_compute_instance(ml_client):
+def create_compute_instance(ml_client, config):
+    compute_target = config["compute"]["compute_target"]
     try:
-        gpu_cluster = ml_client.compute.get(GPU_COMPUTE_TAGET)
-        print(
-            f"You already have a cluster named {GPU_COMPUTE_TAGET}, we'll reuse it as is."
-        )
-        return gpu_cluster
+        return ml_client.compute.get(compute_target)
     except Exception:
-        print("Creating a new gpu compute target...")
+        logger.info("Creating a new compute target...")
         gpu_cluster = AmlCompute(
-            # Name assigned to the compute cluster
             name="gpu-cluster",
-            # Azure ML Compute is the on-demand VM service
             type="amlcompute",
-            # VM Family
-            size="STANDARD_NC6",
-            # Minimum running nodes when there is no job running
+            size=config["compute"]["size"],
             min_instances=0,
-            # Nodes in cluster
             max_instances=4,
-            # How many seconds will the node running after the job termination
             idle_time_before_scale_down=60,
-            # Dedicated or LowPriority. The latter is cheaper but there is a chance of job termination
             tier="Dedicated",
         )
-        gpu_cluster = ml_client.begin_create_or_update(gpu_cluster).result()
-
-        return gpu_cluster
+        return ml_client.begin_create_or_update(gpu_cluster).result()
 
 
-# Step 2: submit job to the created compute instance
-def create_and_submit_job(ml_client):
+def create_and_submit_job(ml_client, config):
+    """Submit job to the created compute instance"""
     job = command(
-        inputs=dict(
-            num_epochs=1, learning_rate=0.001, momentum=0.9, output_dir="./output"
-        ),
-        compute=GPU_COMPUTE_TAGET,
-        environment=CURATED_ENV_NAME,
-        code="./src/",  # location of source code
+        code="./src",
         command=(
             "python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir"
             " ${{inputs.output_dir}}"
         ),
-        experiment_name="bird-experiment",
-        display_name="bird-job",
+        inputs=dict(
+            num_epochs=1,
+            learning_rate=0.001,
+            momentum=0.9,
+            output_dir="./output",
+        ),
+        environment=config["compute"]["environment"],
+        compute=config["compute"]["compute_target"] or "local",
+        display_name="new-bird-job",
+        description="The description of the experiment",
     )
+
     return ml_client.jobs.create_or_update(job)
 
 
 if __name__ == "__main__":
-    aml_client = create_aml_client()
+    logger = logging.getLogger(__file__)
 
-    cluster = create_compute_instance(aml_client)
+    with open("config.toml", mode="rb") as fp:
+        config = tomli.load(fp)
+
+    aml_client = create_aml_client(config)
+
+    cluster = create_compute_instance(aml_client, config)
     print(
         f"AMLCompute with name {cluster.name} was created, with {cluster.size} compute size."
     )
 
-    response = create_and_submit_job(aml_client)
+    response = create_and_submit_job(aml_client, config)
     print(response)

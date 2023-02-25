@@ -1,0 +1,12 @@
+[workspace]
+subscription_id = "f6501a04-fd30-4396-8da3-3f471abb99e2"
+resource_group_name = "tojohnjung-rg"
+workspace_name = "advisorama"
+
+[compute]
+compute_target = "gpu-cluster"
+environment = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
+size = "STANDARD_NC6"
+
+[io]
+model_dir="/Users/jj/.azureml-models"
