@@ -17,30 +17,47 @@ from fowl_classifier.utils import load_data
 class ImageRecogModel:
     def __init__(
         self,
+        input_data_dir: Union[os.PathLike, str],
         model,
-        criterion,
         optimizer,
         scheduler,
-        num_epochs: int,
-        learning_rate: float,
-        momentum: float,
-        input_data_dir: Union[os.PathLike, str],
+        criterion=nn.CrossEntropyLoss(),
+        num_epochs: int = 1,
+        learning_rate: float = 1e-3,
+        momentum: float = 0.9,
     ):
+        self.input_data_dir = input_data_dir
         self.model = model
-        self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.criterion = criterion
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.momentum = momentum
-        self.input_data_dir = input_data_dir
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    def _train_model(self):
-        """Iterate by epoch, phase, and then each data batch."""
+    def training_loop(self):
+        """Iterate by epoch, phase, and then each data batch. Return the best model."""
         since = time.time()
 
         dataloaders, dataset_sizes, class_names = load_data(self.input_data_dir)
+
+        # Load a pretrained model.
+        model_ft = models.resnet18(pretrained=True)
+
+        # Reset the final fully connected layer to 2 classes to predict: chicken or turkey
+        model_ft.fc = nn.Linear(model_ft.fc.in_features, 2)
+        self.model = model_ft.to(self.device)
+        self.optimizer = SGD(
+            self.model.parameters(),
+            lr=self.learning_rate,
+            momentum=self.momentum,
+        )
+        self.scheduler = lr_scheduler.StepLR(
+            self.optimizer,
+            step_size=7,
+            gamma=0.1,
+        )
 
         best_model_wts = copy.deepcopy(self.model.state_dict())
         best_acc = 0.0
@@ -96,39 +113,6 @@ class ImageRecogModel:
         self.model.load_state_dict(best_model_wts)  # load best model weights
 
         return self.model
-
-    def fine_tune_model(self):
-        """Load a pretrained model and reset the final fully connected layer. Return the best model."""
-        model_ft = models.resnet18(pretrained=True)
-        num_ftrs = model_ft.fc.in_features
-        model_ft.fc = nn.Linear(
-            num_ftrs, 2
-        )  # only 2 classes to predict: turkey or chicken
-        model_ft = model_ft.to(self.device)
-
-        criterion =
-        optimizer_ft = SGD(
-            model_ft.parameters(), lr=self.learning_rate, momentum=self.momentum
-        )
-
-        self.model = model_ft
-        self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optimizer_ft
-        self.scheduler = lr_scheduler.StepLR(
-                optimizer_ft, step_size=7, gamma=0.1,
-            )
-        self.num_epochs =
-
-        model = self._train_model(
-            model=model_ft,
-            criterion=criterion,
-            optimizer=optimizer_ft,
-            scheduler=,  # Decay LR by a factor of 0.1 every 7 epochs
-            num_epochs=self.num_epochs,
-            input_data_dir=self.input_data_dir,
-        )
-
-        return model
 
 
 def cli_main(config):
