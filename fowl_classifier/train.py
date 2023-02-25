@@ -2,7 +2,6 @@ import argparse
 import copy
 import os
 import time
-from dataclasses import dataclass
 from typing import Union
 
 import mlflow
@@ -13,16 +12,7 @@ from torch.optim import lr_scheduler, SGD
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
-
-@dataclass
-class ModelDirStructure:
-    root_dir: Union[os.PathLike, str] = os.getenv("AZUREML_MODEL_DIR")
-    training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
-    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
-    training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
-    inference_output: Union[os.PathLike, str] = os.path.join(
-        root_dir, "inference_output"
-    )
+from fowl_classifier.utils import ModelDirStructure
 
 
 def _load_data(data_dir: Union[os.PathLike, str]):
@@ -122,8 +112,7 @@ def train_model(
     mlflow.log_metric("time_it_took_to_train", time_elapsed)
     mlflow.log_metric("best_val_acc", np.float(best_acc))
 
-    # load best model weights
-    model.load_state_dict(best_model_wts)
+    model.load_state_dict(best_model_wts)  # load best model weights
 
     return model
 
@@ -190,7 +179,9 @@ def cli_main():
 
     # Fit model; serializing it as model.pt to the specified output directory
     model = fine_tune_model(
-        input_data_dir=os.path.join(ModelDirStructure().training_input, "fowl_data"),
+        input_data_dir=os.path.join(
+            ModelDirStructure().training_input, INPUT_DATA_FOLDER_NAME
+        ),
         num_epochs=args.num_epochs,
         learning_rate=args.learning_rate,
         momentum=args.momentum,
@@ -202,7 +193,6 @@ def cli_main():
 
 
 if __name__ == "__main__":
-    global DEVICE
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    INPUT_DATA_FOLDER_NAME = "fowl_data"
     cli_main()

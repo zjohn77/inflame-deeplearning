@@ -1,7 +1,19 @@
+import os
+from dataclasses import dataclass
+from typing import Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
-from typing import Union
-import os
+
+
+@dataclass
+class ModelDirStructure:
+    root_dir: Union[os.PathLike, str] = "/Users/jj/.aml-models"
+    training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
+    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
+    training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
+    inference_output: Union[os.PathLike, str] = os.path.join(
+        root_dir, "inference_output"
+    )
 
 
 def download_data(

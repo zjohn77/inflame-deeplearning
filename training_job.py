@@ -47,9 +47,9 @@ def create_compute_instance(ml_client, config):
 def create_and_submit_job(ml_client, config):
     """Submit job to the created compute instance"""
     job = command(
-        code="./src",
+        code="./fowl_classifier",
         command=(
-            "python pytorch_train.py --num_epochs ${{inputs.num_epochs}} --output_dir"
+            "python train.py --num_epochs ${{inputs.num_epochs}} --output_dir"
             " ${{inputs.output_dir}}"
         ),
         inputs=dict(

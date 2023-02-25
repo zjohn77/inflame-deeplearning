@@ -1,42 +1,28 @@
-import logging
-import os
-from dataclasses import dataclass
-from typing import Union
 import json
+import os
 
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 
-
-@dataclass
-class ModelDirStructure:
-    root_dir: Union[os.PathLike, str] = os.getenv("AZUREML_MODEL_DIR")
-    training_input: Union[os.PathLike, str] = os.path.join(root_dir, "training_input")
-    inference_input: Union[os.PathLike, str] = os.path.join(root_dir, "inference_input")
-    training_output: Union[os.PathLike, str] = os.path.join(root_dir, "training_output")
-    inference_output: Union[os.PathLike, str] = os.path.join(
-        root_dir, "inference_output"
-    )
+from fowl_classifier.utils import ModelDirStructure
 
 
-def init():
+def load_model():
     """
     This function is called when the container is initialized/started, typically after create/update of the deployment.
     You can write the logic here to perform init operations like caching the model in memory.
-    AZUREML_MODEL_DIR is an environment variable created during deployment; it is the path to the model folder.
+    AML_MODEL_DIR is an environment variable created during deployment; it is the path to the model folder.
     It is the path to the model folder (~/.azureml-models/$MODEL_NAME/$VERSION)
     """
-    global model
-
     # deserialize the model file back into a model
     model = torch.load(
         os.path.join(ModelDirStructure().training_output, "model.pt"),
         map_location=lambda storage, loc: storage,
     )
-    logging.info("Init complete")
+
+    return model
 
 
 def preprocess(image_file):
@@ -59,12 +45,11 @@ def preprocess(image_file):
     return image.numpy()
 
 
-def run():
+def run_inference(model):
     """get prediction"""
     sample_image_file = os.path.join(
         ModelDirStructure().inference_input, "test_img.jpg"
     )
-    plt.imshow(Image.open(sample_image_file))
     input_data = torch.tensor(preprocess(sample_image_file))
 
     with torch.no_grad():
@@ -74,17 +59,14 @@ def run():
         pred_probs = softmax(output).numpy()[0]
         index = torch.argmax(output, 1)
 
-    result = {
+    return {
         "label": classes[index],
         "probability": str(pred_probs[index]),
     }
 
-    return result
-
 
 if __name__ == "__main__":
-    init()
-    prediction = run()
+    prediction = run_inference(load_model())
     output_path = os.path.join(ModelDirStructure().inference_output, "prediction.json")
     try:
         with open(output_path, "w") as f:
