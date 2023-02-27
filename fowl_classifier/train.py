@@ -51,10 +51,7 @@ class TrainImgClassifier:
         best_acc = 0.0
         for epoch in range(self.num_epochs):
             print(f"Epoch {epoch}/{self.num_epochs - 1}\n", "-" * 10)
-            for phase in [
-                "train",
-                "val",
-            ]:  # Each epoch has a training and validation phase
+            for phase in ["train", "val"]:
                 if phase == "train":
                     scheduler.step()
                     model.train()  # Set model to training mode
