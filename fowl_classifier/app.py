@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict
 
 import mlflow
 import tomli
@@ -8,7 +9,8 @@ import torch
 from fowl_classifier import load_model, PROJ_ROOT_DIR, run_inference, TrainImgClassifier
 
 
-def init():
+def init() -> Dict[str, str]:
+    # Get config
     with open(PROJ_ROOT_DIR / "job_config.toml", "rb") as f:
         config = tomli.load(f)
 
@@ -38,9 +40,11 @@ def train_model_and_serialize(config: dict) -> None:
 
 
 def predict(config: dict) -> None:
+    # Loaded trained model from expected dir, and pass a sample image to it
     model = load_model(config["io"]["training_output"])
     prediction: dict = run_inference(model, config["io"]["inference_input"])
 
+    # Write this prediction dict to file
     output_path = os.path.join(
         config["io"]["inference_output"],
         "prediction.json",
