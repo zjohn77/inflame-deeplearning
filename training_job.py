@@ -7,10 +7,10 @@ from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
 
 def create_aml_client(config):
+    # Get credential
     try:
         credential = DefaultAzureCredential()
         credential.get_token("https://management.azure.com/.default")
-
     except Exception as exc:
         logger.info(exc)
         credential = InteractiveBrowserCredential()
@@ -27,11 +27,11 @@ def create_aml_client(config):
 
 
 def create_compute_instance(ml_client, config):
-    compute_target = config["compute"]["compute_target"]
     try:
-        return ml_client.compute.get(compute_target)
+        # Try to get existing compute resource with this name
+        return ml_client.compute.get(config["compute"]["compute_target"])
     except Exception as exc:
-        logger.info(f"Error: {exc}. Creating a new compute target...")
+        logger.error(f"Error: {exc}. Creating a new compute target...")
         gpu_cluster = AmlCompute(
             name="gpu-cluster",
             type="amlcompute",
@@ -60,8 +60,8 @@ def create_and_submit_job(ml_client, config):
         ),
         environment=config["compute"]["environment"],
         compute=config["compute"]["compute_target"] or "local",
-        display_name="new-bird-job",
-        description="Chicken or turkey classifier",
+        display_name=config["command"]["display_name"],
+        description=config["command"]["description"],
     )
 
     return ml_client.jobs.create_or_update(job)
