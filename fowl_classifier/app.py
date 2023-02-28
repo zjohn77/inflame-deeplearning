@@ -1,14 +1,15 @@
 import json
 import os
 
-import tomli
 import mlflow
+import tomli
 import torch
-from fowl_classifier import TrainImgClassifier, load_model, run_inference, PROJ_ROOT_DIR
+
+from fowl_classifier import load_model, PROJ_ROOT_DIR, run_inference, TrainImgClassifier
 
 
 def init():
-    with open(PROJ_ROOT_DIR / "config.toml", "rb") as f:
+    with open(PROJ_ROOT_DIR / "job_config.toml", "rb") as f:
         config = tomli.load(f)
 
     # Make the output dirs if they don't exist already

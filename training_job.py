@@ -30,8 +30,8 @@ def create_compute_instance(ml_client, config):
     compute_target = config["compute"]["compute_target"]
     try:
         return ml_client.compute.get(compute_target)
-    except Exception:
-        logger.info("Creating a new compute target...")
+    except Exception as exc:
+        logger.info(f"Error: {exc}. Creating a new compute target...")
         gpu_cluster = AmlCompute(
             name="gpu-cluster",
             type="amlcompute",
@@ -71,14 +71,12 @@ if __name__ == "__main__":
     logger = logging.getLogger(__file__)
 
     with open("config.toml", mode="rb") as fp:
-        config = tomli.load(fp)
+        job_config = tomli.load(fp)
 
-    aml_client = create_aml_client(config)
+    aml_client = create_aml_client(job_config)
 
-    cluster = create_compute_instance(aml_client, config)
-    print(
-        f"AMLCompute with name {cluster.name} was created, with {cluster.size} compute size."
-    )
+    cluster = create_compute_instance(aml_client, job_config)
+    logger.info(f"Created AMLCompute called {cluster.name} with size: {cluster.size}.")
 
-    response = create_and_submit_job(aml_client, config)
-    print(response)
+    response = create_and_submit_job(aml_client, job_config)
+    logger.info(f"Submitted job with response: {response}")
