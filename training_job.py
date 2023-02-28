@@ -70,13 +70,25 @@ def create_and_submit_job(ml_client, config):
 if __name__ == "__main__":
     logger = logging.getLogger(__file__)
 
-    with open("config.toml", mode="rb") as fp:
-        job_config = tomli.load(fp)
+    LOCAL_RUN = True
+    if LOCAL_RUN:
+        with open("local-run-config.toml", mode="rb") as fp:
+            job_config = tomli.load(fp)
 
-    aml_client = create_aml_client(job_config)
+        aml_client = create_aml_client(job_config)
 
-    cluster = create_compute_instance(aml_client, job_config)
-    logger.info(f"Created AMLCompute called {cluster.name} with size: {cluster.size}.")
+        response = create_and_submit_job(aml_client, job_config)
+        logger.info(f"Submitted job with response: {response}")
+    else:
+        with open("config.toml", mode="rb") as fp:
+            job_config = tomli.load(fp)
 
-    response = create_and_submit_job(aml_client, job_config)
-    logger.info(f"Submitted job with response: {response}")
+        aml_client = create_aml_client(job_config)
+
+        cluster = create_compute_instance(aml_client, job_config)
+        logger.info(
+            f"Created AMLCompute called {cluster.name} with size: {cluster.size}."
+        )
+
+        response = create_and_submit_job(aml_client, job_config)
+        logger.info(f"Submitted job with response: {response}")
