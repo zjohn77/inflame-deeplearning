@@ -59,7 +59,7 @@ def create_and_submit_job(ml_client, config):
             output_dir="./output",
         ),
         environment=config["compute"]["environment"],
-        compute=config["compute"]["compute_target"] or "local",
+        compute=config["compute"]["compute_target"],
         display_name=config["command"]["display_name"],
         description=config["command"]["description"],
     )
