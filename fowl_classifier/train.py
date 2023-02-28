@@ -1,4 +1,3 @@
-import argparse
 import copy
 import os
 from typing import Union
@@ -95,47 +94,3 @@ class TrainImgClassifier:
         model.load_state_dict(best_model_wts)  # load best model weights
 
         return model
-
-
-def cli_main(config):
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default=config["io"]["training_output"],
-        help="output directory",
-    )
-    parser.add_argument(
-        "--num-epochs",
-        type=int,
-        default=1,
-        help="number of epochs to train",
-    )
-    parser.add_argument(
-        "--learning-rate",
-        type=float,
-        default=0.001,
-        help="learning rate",
-    )
-    parser.add_argument(
-        "--momentum",
-        type=float,
-        default=0.9,
-        help="momentum",
-    )
-    args = parser.parse_args()
-
-    # Start MLflow
-    mlflow.start_run()
-
-    # Fit model; serializing it as model.pt to the specified output directory
-    train_img_classifier = TrainImgClassifier(
-        num_epochs=args.num_epochs,
-        learning_rate=args.learning_rate,
-        momentum=args.momentum,
-    )
-    best_model = train_img_classifier(input_data_dir=config["io"]["training_input"])
-    os.makedirs(args.output_dir, exist_ok=True)
-    torch.save(best_model, os.path.join(args.output_dir, "model.pt"))
-
-    mlflow.end_run()

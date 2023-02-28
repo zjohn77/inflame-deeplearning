@@ -7,7 +7,7 @@ from PIL import Image
 from torchvision import transforms
 
 
-def load_model(config):
+def load_model(training_output_dir):
     """
     This function is called when the container is initialized/started, typically after create/update of the deployment.
     You can write the logic here to perform init operations like caching the model in memory.
@@ -16,7 +16,7 @@ def load_model(config):
     """
     # deserialize the model file back into a model
     model = torch.load(
-        os.path.join(config["io"]["training_output"], "model.pt"),
+        os.path.join(training_output_dir, "model.pt"),
         map_location=lambda storage, loc: storage,
     )
 
@@ -43,10 +43,9 @@ def preprocess(image_file):
     return image.numpy()
 
 
-def run_inference(model, config):
+def run_inference(model, inference_input_file):
     """get prediction"""
-    sample_image_file = config["io"]["inference_input"]
-    input_data = torch.tensor(preprocess(sample_image_file))
+    input_data = torch.tensor(preprocess(inference_input_file))
 
     with torch.no_grad():
         output = model(input_data)
