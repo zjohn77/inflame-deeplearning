@@ -7,7 +7,7 @@ from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
 
 def create_aml_client(config):
-    # Get credential
+    # Most likely need to get credentials from Azure CLI via: az login
     try:
         credential = DefaultAzureCredential()
         credential.get_token("https://management.azure.com/.default")
@@ -27,6 +27,7 @@ def create_aml_client(config):
 
 
 def create_compute_instance(ml_client, config):
+    """TODO: add conditionals for switching between gpu and cpu."""
     try:
         # Try to get existing compute resource with this name
         return ml_client.compute.get(config["compute"]["compute_target"])
@@ -48,7 +49,7 @@ def create_and_submit_job(ml_client, config):
     """Submit job to the created compute instance or local"""
     job = command(
         code="./fowl_classifier",
-        command="pip install -r requirements.txt && python app.py",
+        command="python app.py",
         inputs=dict(
             num_epochs=1,
             learning_rate=0.001,
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
     LOCAL_RUN = True
     if LOCAL_RUN:
-        with open("local-run-config.toml", mode="rb") as fp:
+        with open("configs/local-run-config.toml", mode="rb") as fp:
             local_run_config = tomli.load(fp)
 
         aml_client = create_aml_client(local_run_config)
@@ -78,7 +79,7 @@ if __name__ == "__main__":
         response = create_and_submit_job(aml_client, local_run_config)
         logger.info(f"Submitted job with response: {response}")
     else:
-        with open("remote-job-config.toml", mode="rb") as fp:
+        with open("configs/remote-job-config.toml", mode="rb") as fp:
             remote_job_config = tomli.load(fp)
 
         aml_client = create_aml_client(remote_job_config)
