@@ -5,6 +5,7 @@ workspace_name = "advisorama"
 
 [compute]
 compute_target = "local"
+environment = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
 
 [io]
 training_input = "/Users/jj/.aml-models/training_input/fowl_data"
