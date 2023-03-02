@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -6,13 +7,7 @@ from PIL import Image
 from torchvision import transforms
 
 
-def load_model(training_output_dir):
-    """
-    This function is called when the container is initialized/started, typically after create/update of the deployment.
-    You can write the logic here to perform init operations like caching the model in memory.
-    AML_MODEL_DIR is an environment variable created during deployment; it is the path to the model folder.
-    It is the path to the model folder (~/.azureml-models/$MODEL_NAME/$VERSION)
-    """
+def load_model(training_output_dir: Union[os.PathLike, str]):
     # deserialize the model file back into a model
     model = torch.load(
         os.path.join(training_output_dir, "model.pt"),
@@ -22,7 +17,7 @@ def load_model(training_output_dir):
     return model
 
 
-def preprocess(image_file):
+def preprocess(image_file: Union[os.PathLike, str]):
     """Preprocess the input image."""
     image = Image.open(image_file)
 
@@ -42,7 +37,7 @@ def preprocess(image_file):
     return image.numpy()
 
 
-def run_inference(model, inference_input_file):
+def run_inference(model, inference_input_file: Union[os.PathLike, str]):
     """get prediction"""
     input_data = torch.tensor(preprocess(inference_input_file))
 

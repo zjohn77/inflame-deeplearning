@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Any, Dict, Tuple, Union
 from urllib.request import urlretrieve
 from zipfile import ZipFile
 
@@ -21,13 +21,14 @@ def download_data(
         print("finished extracting")
         downloaded_data_dir = z.namelist()[0]
 
-    # clean up zip file
-    os.remove(tmp_data_download_path)
+    os.remove(tmp_data_download_path)  # clean up zip file
 
     return downloaded_data_dir
 
 
-def load_data(data_dir: Union[os.PathLike, str]):
+def mk_torch_dataloader(
+    data_dir: Union[os.PathLike, str]
+) -> Tuple[Dict[str, DataLoader], Dict[str, int], Any]:
     """Make pytorch data loaders."""
     # Data augmentation and normalization for training
     # Just normalization for validation

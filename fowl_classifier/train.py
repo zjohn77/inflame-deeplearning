@@ -9,11 +9,11 @@ import torch.nn as nn
 from torch.optim import lr_scheduler, SGD
 from torchvision import models
 
-from fowl_classifier.utils import load_data
+from fowl_classifier.utils import mk_torch_dataloader
 
 
 class TrainImgClassifier:
-    """Iterate by epoch, phase, and then each data batch. Return the best model."""
+    """Callable object that iterates by epoch, phase, and then each data batch. Return the best model."""
 
     def __init__(
         self,
@@ -23,15 +23,16 @@ class TrainImgClassifier:
         momentum: float = 0.9,
     ):
         self.criterion = criterion
+        self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.momentum = momentum
-        self.num_epochs = num_epochs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def __call__(self, input_data_dir: Union[os.PathLike, str]):
-        dataloaders, dataset_sizes, class_names = load_data(input_data_dir)
+        dataloaders, dataset_sizes, class_names = mk_torch_dataloader(input_data_dir)
 
-        # Load pretrained model; reset the final fully connected layer to 2 classes to predict: chicken or turkey
+        # Load pretrained model; reset the final fully connected layer to 2 classes to predict:
+        # chicken or turkey
         model_ft = models.resnet18(pretrained=True)
         model_ft.fc = nn.Linear(model_ft.fc.in_features, 2)
         model = model_ft.to(self.device)
