@@ -6,7 +6,7 @@ workspace_name = "advisorama"
 [compute]
 compute_target = "gpu-cluster"
 environment = "AzureML-pytorch-1.9-ubuntu18.04-py37-cuda11-gpu@latest"
-size = "STANDARD_NC6"
+size = "Standard_NV12s_v3"
 
 [io]
 training_input = "./training_input/fowl_data"
