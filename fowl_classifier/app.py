@@ -12,7 +12,7 @@ from fowl_classifier import load_model, PROJ_ROOT_DIR, run_inference, TrainImgCl
 def init() -> Dict[str, str]:
     """Read the io config from toml file and make the directories specified in the config."""
     # Get config
-    with open(PROJ_ROOT_DIR / "job_config.toml", "rb") as fp:
+    with open(PROJ_ROOT_DIR / "local-run-config.toml", "rb") as fp:
         config = tomli.load(fp)
 
     # Make the output dirs if they don't exist already

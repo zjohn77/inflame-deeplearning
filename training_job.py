@@ -80,7 +80,7 @@ if __name__ == "__main__":
         response = create_and_submit_job(aml_client, job_config)
         logger.info(f"Submitted job with response: {response}")
     else:
-        with open("config.toml", mode="rb") as fp:
+        with open("remote-job-config.toml", mode="rb") as fp:
             job_config = tomli.load(fp)
 
         aml_client = create_aml_client(job_config)
