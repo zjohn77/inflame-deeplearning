@@ -12,7 +12,7 @@ def create_aml_client(config):
         credential = DefaultAzureCredential()
         credential.get_token("https://management.azure.com/.default")
     except Exception as exc:
-        logger.info(exc)
+        logger.error(exc)
         credential = InteractiveBrowserCredential()
 
     # noinspection PyTypeChecker
@@ -45,13 +45,10 @@ def create_compute_instance(ml_client, config):
 
 
 def create_and_submit_job(ml_client, config):
-    """Submit job to the created compute instance"""
+    """Submit job to the created compute instance or local"""
     job = command(
         code="./fowl_classifier",
-        command=(
-            "python train.py --num_epochs ${{inputs.num_epochs}} --output_dir"
-            " ${{inputs.output_dir}}"
-        ),
+        command="pip install -r requirements.txt && python app.py",
         inputs=dict(
             num_epochs=1,
             learning_rate=0.001,
@@ -60,6 +57,7 @@ def create_and_submit_job(ml_client, config):
         ),
         environment=config["compute"]["environment"],
         compute=config["compute"]["compute_target"],
+        experiment_name="turkey-or-chicken-experiment",
         display_name=config["command"]["display_name"],
         description=config["command"]["description"],
     )
@@ -73,22 +71,22 @@ if __name__ == "__main__":
     LOCAL_RUN = True
     if LOCAL_RUN:
         with open("local-run-config.toml", mode="rb") as fp:
-            job_config = tomli.load(fp)
+            local_run_config = tomli.load(fp)
 
-        aml_client = create_aml_client(job_config)
+        aml_client = create_aml_client(local_run_config)
 
-        response = create_and_submit_job(aml_client, job_config)
+        response = create_and_submit_job(aml_client, local_run_config)
         logger.info(f"Submitted job with response: {response}")
     else:
         with open("remote-job-config.toml", mode="rb") as fp:
-            job_config = tomli.load(fp)
+            remote_job_config = tomli.load(fp)
 
-        aml_client = create_aml_client(job_config)
+        aml_client = create_aml_client(remote_job_config)
 
-        cluster = create_compute_instance(aml_client, job_config)
+        cluster = create_compute_instance(aml_client, remote_job_config)
         logger.info(
             f"Created AMLCompute called {cluster.name} with size: {cluster.size}."
         )
 
-        response = create_and_submit_job(aml_client, job_config)
+        response = create_and_submit_job(aml_client, remote_job_config)
         logger.info(f"Submitted job with response: {response}")
