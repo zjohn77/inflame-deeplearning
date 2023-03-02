@@ -21,7 +21,7 @@ def init() -> Dict[str, str]:
             if not os.path.isdir(p):
                 os.mkdir(p)
 
-    return config["io"]
+    return config
 
 
 def train_model_and_serialize(config: dict) -> None:
@@ -32,7 +32,7 @@ def train_model_and_serialize(config: dict) -> None:
     best_model = train_img_classifier(input_data_dir=config["io"]["training_input"])
 
     # Serializing it as model.pt to the specified output directory
-    output_dir = config["io"]["training_output_dir"]
+    output_dir = config["io"]["training_output"]
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     torch.save(best_model, os.path.join(output_dir, "model.pt"))
