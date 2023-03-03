@@ -11,7 +11,7 @@ class RunTrainingJob:
         self.use_gpu = use_gpu
 
         try:
-            with open("../configs/job-config.toml", mode="rb") as fp:
+            with open("../config/job-config.toml", mode="rb") as fp:
                 self.config = tomli.load(fp)
         except tomli.TOMLDecodeError:
             print("Invalid toml config.")
