@@ -10,13 +10,11 @@ from fowl_classifier import load_model, PROJ_ROOT_DIR, run_inference, TrainImgCl
 
 
 def init() -> Dict[str, str]:
-    """Read the io compute_config from toml file and make the directories specified in the compute_config.
-    """
-    # Get compute_config
-    with open(PROJ_ROOT_DIR / "local-run-compute_config.toml", "rb") as fp:
+    """Read the config toml; make the dirs specified within."""
+    with open(PROJ_ROOT_DIR / "config" / "job-config.toml", "rb") as fp:
         config = tomli.load(fp)
 
-    # Make the output dirs if they don't exist already
+    # Make the output dirs if they don't already exist.
     for p in config["io"].values():
         if p.split("_")[-1] == "output":
             if not os.path.isdir(p):
