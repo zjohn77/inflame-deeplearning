@@ -59,6 +59,6 @@ def predict(config: dict) -> None:
 
 
 if __name__ == "__main__":
-    io_config = init()
-    train_model_and_serialize(io_config)
-    predict(io_config)
+    job_config: dict = init()
+    train_model_and_serialize(job_config)
+    predict(job_config)
