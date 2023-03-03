@@ -6,12 +6,17 @@ import mlflow
 import tomli
 import torch
 
-from fowl_classifier import load_model, PROJ_ROOT_DIR, run_inference, TrainImgClassifier
+from fowl_classifier import (
+    load_model,
+    MODULE_ROOT_DIR,
+    run_inference,
+    TrainImgClassifier,
+)
 
 
 def init() -> Dict[str, str]:
     """Read the config toml; make the dirs specified within."""
-    with open(PROJ_ROOT_DIR / "config" / "job-config.toml", "rb") as fp:
+    with open(MODULE_ROOT_DIR / "config" / "job-config.toml", "rb") as fp:
         config = tomli.load(fp)
 
     # Make the output dirs if they don't already exist.

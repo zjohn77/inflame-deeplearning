@@ -5,16 +5,18 @@ from azure.ai.ml import command, MLClient
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 
+from fowl_classifier import MODULE_ROOT_DIR
+
 
 class RunTrainingJob:
     def __init__(self, use_gpu=False):
         self.use_gpu = use_gpu
 
         try:
-            with open("../config/job-config.toml", mode="rb") as fp:
+            with open(MODULE_ROOT_DIR / "config" / "job-config.toml", mode="rb") as fp:
                 self.config = tomli.load(fp)
         except tomli.TOMLDecodeError:
-            print("Invalid toml config.")
+            logger.error("Invalid toml config.")
 
         # Most likely need to get credentials from Azure CLI via: az login
         try:
@@ -59,15 +61,15 @@ class RunTrainingJob:
 
         return self.ml_client.jobs.create_or_update(
             command(
-                display_name=self.config["command"]["display_name"],
-                environment=self.config["command"]["environment"],
+                display_name=self.config["job"]["display_name"],
                 inputs=dict(
                     num_epochs=self.config["hyperparam"]["num_epochs"],
                     learning_rate=self.config["hyperparam"]["learning_rate"],
                     momentum=self.config["hyperparam"]["momentum"],
                 ),
                 code=self.config["io"]["code_module_dir"],
-                command="python app.py",
+                command=self.config["job"]["command"],
+                environment=self.config["compute.gpu"]["environment"],
                 compute=cluster.name,
             )
         )
@@ -76,5 +78,5 @@ class RunTrainingJob:
 if __name__ == "__main__":
     logger = logging.getLogger(__file__)
 
-    submitted_job = RunTrainingJob(use_gpu=False)()
+    submitted_job = RunTrainingJob(use_gpu=True)()
     logger.info(f"The submitted job object on AML: {submitted_job}")

@@ -1,0 +1,6 @@
+azure-identity
+mlflow
+numpy
+pillow
+tomli
+torchvision
