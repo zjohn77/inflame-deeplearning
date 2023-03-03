@@ -75,5 +75,6 @@ class RunTrainingJob:
 
 if __name__ == "__main__":
     logger = logging.getLogger(__file__)
+
     submitted_job = RunTrainingJob(use_gpu=False)()
     logger.info(f"The submitted job object on AML: {submitted_job}")
