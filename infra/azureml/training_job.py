@@ -67,7 +67,7 @@ class RunTrainingJob:
                     learning_rate=self.config["hyperparam"]["learning_rate"],
                     momentum=self.config["hyperparam"]["momentum"],
                 ),
-                code=self.config["io"]["code_module_dir"],
+                code=self.config["job"]["code_module_dir"],
                 command=self.config["job"]["command"],
                 environment=self.config["compute.gpu"]["environment"],
                 compute=cluster.name,

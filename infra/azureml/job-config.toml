@@ -16,3 +16,4 @@ environment = "AzureML-ACPT-pytorch-1.12-py39-cuda11.6-gpu"
 [job]
 display_name = "new-bird-job"
 command = "pip install -r requirements.txt && python app.py"
+code_module_dir = "./fowl_classifier"

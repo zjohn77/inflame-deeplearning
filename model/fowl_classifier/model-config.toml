@@ -3,7 +3,6 @@ training_input = "/Users/jj/.aml-models/training_input/fowl_data"
 training_output = "/Users/jj/.aml-models/training_output"
 inference_input = "/Users/jj/.aml-models/inference_input/test_img.jpg"
 inference_output = "/Users/jj/.aml-models/inference_output"
-code_module_dir = "./fowl_classifier"
 
 [hyperparam]
 num_epochs = 1
