@@ -4,7 +4,6 @@ import tomli
 from azure.ai.ml import command, MLClient
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
-from azure.storage.blob import BlobServiceClient
 
 from model.fowl_classifier import MODULE_ROOT_DIR
 
@@ -32,12 +31,6 @@ class RunTrainingJob:
             subscription_id=self.config["workspace"]["subscription_id"],
             resource_group_name=self.config["workspace"]["resource_group_name"],
             workspace_name=self.config["workspace"]["workspace_name"],
-            credential=self.credential,
-        )
-
-    def azure_blob_storage_io(self):
-        blob_service_client = BlobServiceClient(
-            account_url=self.config["workspace"]["storage_account_url"],
             credential=self.credential,
         )
 
