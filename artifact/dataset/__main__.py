@@ -4,8 +4,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import List, Union, Dict
 
-from artifact import ParseKwargs
-from .random_data_split import train_dev_eval_split, mv_files_to_dir
+from artifact.dataset import train_dev_eval_split, mv_files_to_dir, ParseKwargs
 
 
 def split_datafiles(

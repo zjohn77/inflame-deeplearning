@@ -1,28 +1,9 @@
-[workspace]
-subscription_id = "f6501a04-fd30-4396-8da3-3f471abb99e2"
-resource_group_name = "tojohnjung-rg"
-workspace_name = "advisorama"
-storage_account_url = "https://advisorama8464815784.blob.core.windows.net/"
-
-[compute.cpu]
-name = "cpu-cluster"
-size = "Standard_D2ds_v4"
-
-[compute.gpu]
-name = "gpu-cluster"
-size = "Standard_NV12s_v3"
-environment = "AzureML-ACPT-pytorch-1.12-py39-cuda11.6-gpu"
-
 [io]
 training_input = "/Users/jj/.aml-models/training_input/fowl_data"
 training_output = "/Users/jj/.aml-models/training_output"
 inference_input = "/Users/jj/.aml-models/inference_input/test_img.jpg"
 inference_output = "/Users/jj/.aml-models/inference_output"
 code_module_dir = "./fowl_classifier"
-
-[job]
-display_name = "new-bird-job"
-command = "pip install -r requirements.txt && python app.py"
 
 [hyperparam]
 num_epochs = 1
