@@ -4,7 +4,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import List, Union, Dict
 
-from artifact.utils import ParseKwargs
+from artifact import ParseKwargs
 from .random_data_split import train_dev_eval_split, mv_files_to_dir
 
 

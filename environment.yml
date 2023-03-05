@@ -1,0 +1,17 @@
+name: inflame-deeplearning
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python==3.9.*
+  - pip
+  - pip:
+    - azure-ai-ml
+    - azure-identity
+    - azure-storage-blob
+    - mlflow
+    - numpy
+    - pillow
+    - tomli
+    - torch==1.12.1
+    - torchvision
