@@ -4,10 +4,12 @@ import tomli
 from azure.ai.ml import command, MLClient
 from azure.ai.ml.entities import AmlCompute
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
+from azure.storage.blob import BlobServiceClient
 
-from fowl_classifier import MODULE_ROOT_DIR
+from model.fowl_classifier import MODULE_ROOT_DIR
 
 
+# noinspection PyTypeChecker
 class RunTrainingJob:
     def __init__(self, use_gpu=False):
         self.use_gpu = use_gpu
@@ -20,18 +22,23 @@ class RunTrainingJob:
 
         # Most likely need to get credentials from Azure CLI via: az login
         try:
-            credential = DefaultAzureCredential()
-            credential.get_token("https://management.azure.com/.default")
+            self.credential = DefaultAzureCredential()
+            self.credential.get_token("https://management.azure.com/.default")
         except Exception as exc:
             logger.error(exc)
-            credential = InteractiveBrowserCredential()
+            self.credential = InteractiveBrowserCredential()
 
-        # noinspection PyTypeChecker
         self.ml_client = MLClient(
             subscription_id=self.config["workspace"]["subscription_id"],
             resource_group_name=self.config["workspace"]["resource_group_name"],
             workspace_name=self.config["workspace"]["workspace_name"],
-            credential=credential,
+            credential=self.credential,
+        )
+
+    def azure_blob_storage_io(self):
+        blob_service_client = BlobServiceClient(
+            account_url=self.config["workspace"]["storage_account_url"],
+            credential=self.credential,
         )
 
     def __create_compute_resource__(self, compute_config):

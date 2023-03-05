@@ -6,7 +6,7 @@ import mlflow
 import tomli
 import torch
 
-from fowl_classifier import (
+from model.fowl_classifier import (
     load_model,
     MODULE_ROOT_DIR,
     run_inference,

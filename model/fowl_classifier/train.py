@@ -9,12 +9,11 @@ import torch.nn as nn
 from torch.optim import lr_scheduler, SGD
 from torchvision import models
 
-from fowl_classifier.utils import mk_torch_dataloader
+from model.fowl_classifier.utils import mk_torch_dataloader
 
 
 class TrainImgClassifier:
-    """Callable object that iterates by epoch, phase, and then each data batch. Return the best model.
-    """
+    """Callable object that iterates by epoch, phase, and then each data batch. Return the best model."""
 
     def __init__(
         self,
