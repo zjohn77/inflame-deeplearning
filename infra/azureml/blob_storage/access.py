@@ -1,19 +1,35 @@
-from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
-from azure.storage.blob import BlobServiceClient
+import logging
+import os
+from typing import Union
+
+from azure.storage.blob import BlobClient
 
 
-# noinspection PyTypeChecker
 class Access:
-    def __init__(self):
-        # Most likely need to get credentials from Azure CLI via: az login
-        try:
-            self.credential = DefaultAzureCredential()
-            self.credential.get_token("https://management.azure.com/.default")
-        except Exception:
-            self.credential = InteractiveBrowserCredential()
+    def __init__(self, job_config: dict):
+        self.logger = logging.getLogger(__file__)
+        self.container_name = job_config["workspace"]["storage_container_name"]
 
-    def download(self):
-        blob_service_client = BlobServiceClient(
-            account_url=self.config["workspace"]["storage_account_url"],
-            credential=self.credential,
+    def download(
+        self,
+        blob_name: str,
+        local_download_dir: Union[os.PathLike, str, bytes],
+    ):
+        try:
+            blob_client = BlobClient.from_connection_string(
+                conn_str=os.getenv("AZURE_STORAGE_ACCOUNT_CONNECTION_STRING"),
+                container_name=self.container_name,
+                blob_name=blob_name,
+            )
+        except AttributeError:
+            raise "Connection string environment variable not set properly."
+
+        local_download_path = os.path.join(local_download_dir, blob_name)
+        with open(local_download_path, "wb") as fp:
+            blob_data = blob_client.download_blob()
+            blob_data.readinto(fp)
+
+        self.logger.info(
+            f"Dowloaded blob from Azure Storage Container: {self.container_name}\n"
+            "to: {local_download_path}"
         )

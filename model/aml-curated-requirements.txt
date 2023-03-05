@@ -1,4 +1,4 @@
-azure-identity
+adlfs
 mlflow
 numpy
 pillow

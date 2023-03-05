@@ -2,7 +2,8 @@
 subscription_id = "f6501a04-fd30-4396-8da3-3f471abb99e2"
 resource_group_name = "tojohnjung-rg"
 workspace_name = "advisorama"
-storage_account_url = "https://advisorama8464815784.blob.core.windows.net/"
+storage_container_name = "pdf-brochures"
+storage_uri = "abfs://pdf-brochures/turkey-hello.txt"
 
 [compute.cpu]
 name = "cpu-cluster"

@@ -12,6 +12,7 @@ from model.fowl_classifier import (
     run_inference,
     TrainImgClassifier,
 )
+from infra.azureml import Access
 
 
 def load_model_config(
