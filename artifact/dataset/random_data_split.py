@@ -5,22 +5,31 @@ import shutil
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 
 def split_datafiles(
     datadir: Union[os.PathLike, str],
     **splits: Optional[float],
 ) -> Dict[str, List[str]]:
-    """Given a directory holding data files and kwargs of split names & frac of each split,
-    randomly divide up the files and move them to new subdirs created based on the split names.
+    """Given a directory holding data files and kwargs of split names & the percentage of each split,
+    randomly divide up the files and copy them to new subdirs created based on the split names.
 
-    :param datadir: Dir containing list of files to be split into train, dev, eval, etc.
-    :param splits: Optional kwargs of split names & frac of each split.
+    Args:
+        datadir (PathLike or str): Dir containing list of files to be split into train, dev, eval, etc.
+        **splits (optional kwargs of float type): Split name & the fraction of this split (e.g. train=0.8, val=0.2).
+
+    Returns:
+        An inverted index of where the files belonging to each split are stored on the filesystem--something like the
+        following:
+        {
+            "train": ['/pthname1', '/pthname2'],
+            "val": ['/pthname3']
+        }
     """
     datadir = Path(datadir)
 
-    # Check if the optional kwargs are provided; if not, or if degenerate, make the default 80-20 split.
+    # Check if the optional kwargs are provided; if not, or if degenerate, do the default 80-20 split.
     if not isinstance(splits, dict) or len(splits) < 2:
         splits = {"train": 0.8, "val": 0.2}
 
@@ -30,6 +39,7 @@ def split_datafiles(
         fracs=[frac for frac in ordered_splits.values()],
     )
 
+    # Copy the randomly spit files using filesystem utilities.
     split_names = ordered_splits.keys()
     for i, split_name in enumerate(split_names):
         _cp_files_to_dir(
@@ -37,6 +47,8 @@ def split_datafiles(
             dest_dir=datadir / split_name,
         )
 
+    # Conveniently provide an inverted index for simpler reading and documentation of the structure of the randomly
+    # split dataset.
     datafiles_index: Dict[str, List[str]] = {
         split_name: list(map(lambda pth: str(pth.absolute()), filelist))
         for split_name, filelist in zip(split_names, train_dev_eval)
@@ -49,7 +61,8 @@ def _train_dev_eval_split(
     datadir: Path,
     fracs: List[float],
 ) -> List[Union[List[Path], None]]:
-    """
+    """Utility for random data sampling.
+
     :param datadir: Dir containing files to be split into train, dev, eval, etc.
     :param fracs: Fractions of splits to be produced
 
@@ -100,7 +113,8 @@ def _train_dev_eval_split(
 
 
 def _cp_files_to_dir(src_paths: List[Path], dest_dir: Path):
-    """
+    """Utility for recursively copying a dir to a dest_dir.
+
     :param src_paths: File paths to be moved to a new destination
     :param dest_dir: The destination Path; if this folder doesn't yet exist, it'll be created
 
