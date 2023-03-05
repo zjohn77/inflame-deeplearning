@@ -1,46 +1,38 @@
-import json
 import math
 import os
 import random
+import shutil
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Iterable, List, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 
 def split_datafiles(
-    datadir: Path,
-    **splits: Union[None, Dict[str, float]],
-):
+    datadir: Union[os.PathLike, str],
+    **splits: Optional[float],
+) -> Dict[str, List[str]]:
     """Given a directory holding data files and kwargs of split names & frac of each split,
     randomly divide up the files and move them to new subdirs created based on the split names.
 
     :param datadir: Dir containing list of files to be split into train, dev, eval, etc.
-    :param splits: Kwargs of split names & frac of each split
-
-    Write to datadir/data_splits_index.json something like the following:
-    {
-        "train": ['/pthname1', '/pthname2'],
-        "val": ['/pthname3']
-    }
-
-    Examples
-    --------
-    % python -m artifact /Users/jj/Public/data/docsum_datasets/bbcnews/data
-    % python -m artifact /Users/jj/Public/data/docsum_datasets/bbcnews/data --splits train=0.8 dev=0.1 eval=0.1
+    :param splits: Optional kwargs of split names & frac of each split.
     """
+    datadir = Path(datadir)
+
+    # Check if the optional kwargs are provided; if not, or if degenerate, make the default 80-20 split.
     if not isinstance(splits, dict) or len(splits) < 2:
-        splits = {"train": 0.8, "val": 0.2}  # default splits
+        splits = {"train": 0.8, "val": 0.2}
 
     ordered_splits = OrderedDict(splits)
     train_dev_eval: List[List[Path]] = _train_dev_eval_split(
         datadir=datadir,
-        fracs=ordered_splits.values(),
+        fracs=[frac for frac in ordered_splits.values()],
     )
 
     split_names = ordered_splits.keys()
     for i, split_name in enumerate(split_names):
-        _mv_files_to_dir(
+        _cp_files_to_dir(
             src_paths=train_dev_eval[i],
             dest_dir=datadir / split_name,
         )
@@ -50,13 +42,12 @@ def split_datafiles(
         for split_name, filelist in zip(split_names, train_dev_eval)
     }
 
-    with open(datadir.parent / "data_splits_index.json", "w") as f:
-        json.dump(datafiles_index, f)
+    return datafiles_index
 
 
 def _train_dev_eval_split(
     datadir: Path,
-    fracs: Iterable[float],
+    fracs: List[float],
 ) -> List[Union[List[Path], None]]:
     """
     :param datadir: Dir containing files to be split into train, dev, eval, etc.
@@ -108,7 +99,7 @@ def _train_dev_eval_split(
     return splits
 
 
-def _mv_files_to_dir(src_paths: List[Path], dest_dir: Path):
+def _cp_files_to_dir(src_paths: List[Path], dest_dir: Path):
     """
     :param src_paths: File paths to be moved to a new destination
     :param dest_dir: The destination Path; if this folder doesn't yet exist, it'll be created
@@ -122,6 +113,7 @@ def _mv_files_to_dir(src_paths: List[Path], dest_dir: Path):
 
     for src_path in src_paths:
         dest_path = dest_dir / src_path.name
-        os.rename(str(src_path.absolute()), str(dest_path.absolute()))
+        # os.rename(str(src_path.absolute()), str(dest_path.absolute()))
+        shutil.copy(src_path.absolute(), dest_path.absolute())
 
     return sum(len(files) for _, _, files in os.walk(dest_dir))
