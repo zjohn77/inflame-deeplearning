@@ -1,10 +1,10 @@
-[io]
-training_input = "/Users/jj/.aml-models/training_input/fowl_data"
-training_output = "/Users/jj/.aml-models/training_output"
-inference_input = "/Users/jj/.aml-models/inference_input/test_img.jpg"
-inference_output = "/Users/jj/.aml-models/inference_output"
+[io.azure]
+training_input = "abfs://pdf-brochures/training_input/fowl_data"
+training_output = "abfs://pdf-brochures/training_output"
+inference_input = "abfs://pdf-brochures/inference_input/test_img.jpg"
+inference_output = "abfs://pdf-brochures/inference_output"
 
-[io.local]
+[io]
 training_input = "/Users/jj/.aml-models/training_input/fowl_data"
 training_output = "/Users/jj/.aml-models/training_output"
 inference_input = "/Users/jj/.aml-models/inference_input/test_img.jpg"
