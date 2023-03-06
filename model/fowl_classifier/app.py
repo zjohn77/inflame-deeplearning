@@ -7,11 +7,27 @@ import tomli
 import torch
 
 from model.fowl_classifier import (
-    load_model, MODULE_ROOT_DIR, run_inference, TrainImgClassifier,
+    load_model,
+    MODULE_ROOT_DIR,
+    run_inference,
+    TrainImgClassifier,
 )
 
 
 class ModelTrainPredict:
+    """Given a directory holding data files and kwargs of split names & the percentage of each split,
+    randomly divide up the files and copy them to new subdirs created based on the split names.
+
+    Args:
+        model_config_path (PathLike or str or bytes): The path to the model config file.
+
+    Attributes:
+        _model_config (dict): Wraps pretty much all of the parameters passed to the methods.
+        training_input (dict): The URI to the dir with the training and validation data.
+        training_output (dict): The URI to the dir where the model.pt is written to during training run.
+        inference_input (dict): The URI of a test image passed to the model during inference.
+        inference_output (dict): The URI to the dir where prediction results are saved to during inference.
+    """
     def __init__(self, model_config_path):
         self._model_config = self._load_model_config(model_config_path)
         io_config = self._model_config["io"]
@@ -109,8 +125,7 @@ class ModelTrainPredict:
 
 
 if __name__ == "__main__":
-    model_train_predict = ModelTrainPredict(
-        model_config_path=MODULE_ROOT_DIR / "model-config.toml"
-    )
-    training_output_dir = model_train_predict.train_model_and_serialize()
-    predicted_label_with_prob = model_train_predict.predict(training_output_dir)
+    mtp = ModelTrainPredict(model_config_path=MODULE_ROOT_DIR / "model-config.toml")
+    training_output_dir = mtp.train_model_and_serialize()
+    predicted_label_with_prob = mtp.predict(training_output_dir)
+    print(predicted_label_with_prob)
