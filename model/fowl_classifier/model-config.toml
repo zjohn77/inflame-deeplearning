@@ -1,3 +1,6 @@
+# Sections can be easily switched in and out by appending .<tag> just as was done with [io.azure], because only the keys
+# without the dot are used by app.py currently, and the tag serves double purpose as annotation for what that config is
+# about.
 [io.azure]
 training_input = "abfs://pdf-brochures/training_input/fowl_data"
 training_output = "abfs://pdf-brochures/training_output"
