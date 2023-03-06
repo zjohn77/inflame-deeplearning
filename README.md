@@ -25,7 +25,7 @@ in `artifact/__init__.py` enables code outside artifact to import split_datafile
 ```python
 from artifact import split_datafiles
 ```
-* The entry point of a module is designed to be readily apparent; when there are several py files on the same level in a directory, the entry point is either `app.py` or `main.py`, in accordance with python convention.
+* The entry point of a module is designed to be readily apparent; when there are several `py` files on the same level in a directory, the entry point is either `app.py` or `main.py`, in accordance with python convention.
 
 ### 🚶 A Tour of the Project
 Starting from the project root, there are essentially 4 modules:
@@ -94,9 +94,9 @@ Next, we are going to create a virtual environment using conda from `environment
 conda env create -n inflame-deeplearning --file environment.yml
 ```
 
-There is some housekeeping to do with pointing the training code to data on your own computer, and the `model-config.toml` file enables you to switch parameters in and out easily. This file has a section for hyperparameters and a section for IO. The IO section contains the following variables: `training_input`, `training_output`, `inference_input`, and `inference_output`.
+There is some housekeeping to do with pointing the training code to data on your own computer, and the `model-config.toml` file enables us to switch parameters in and out easily. This file has a section for hyperparameters and a section for IO. The IO section contains the following variables: `training_input`, `training_output`, `inference_input`, and `inference_output`.
 
-To run our example model, we are going to download and unzip this [bird images dataset](https://azuremlexamples.blob.core.windows.net/datasets/fowl_data.zip), and point the `training_input` variable to it. Then, point the `inference_input` variable to whatever test image you like. It's easy. Now, we're ready to run kick off a training run with `app.py`, and the way that this module works is that it is really just like a telephone switchboard. The actual training loop is in `train.py`; abstracting the interface from the implementation in this way allows us to easily swap out that training loop in `train.py` with another, totally unrelated, neural network architecture without worrying about breaking any communications between `app.py` and `model-config.toml`, or between the `model` module and the `infra` module. As a matter of fact, the `infra` module is aware of only one thing about the `model` module: that there is a script called `app.py` in the model module. Arguably, this project (inflame-deeplearning) wins against jupyter notebook on this point.
+To run our example model, we are going to download and unzip this [bird images dataset](https://azuremlexamples.blob.core.windows.net/datasets/fowl_data.zip), and point the `training_input` variable to it. Then, point the `inference_input` variable to whatever test image you like. It's easy. Now, we're ready to kick off a training run with `app.py`, and the way that this module works is that it is really just like a telephone switchboard. The actual training loop is in `train.py`. Abstracting the interface from the implementation in this way allows us to easily swap out that training loop in `train.py` with another, totally unrelated, neural network architecture without worrying about breaking any communication between `app.py` and `model-config.toml`, or between the `model` module and the `infra` module. As a matter of fact, the `infra` module is aware of only one thing about the `model` module: that there is a script called `app.py` in the model module. Arguably, this project (inflame-deeplearning) wins against jupyter notebook on this point.
 
 In your virtual environment, you'll change into or point your IDE to where `app.py` is and run:
 ```python
